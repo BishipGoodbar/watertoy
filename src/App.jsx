@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, forwardRef, useRef, useState, useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { TorusGeometry, PlaneGeometry, MeshNormalMaterial, DoubleSide, Vector3, CylinderGeometry } from 'three';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { TorusGeometry, PlaneGeometry, MeshNormalMaterial, DoubleSide, Vector3, CylinderGeometry, BoxGeometry } from 'three';
 import { Geometry } from 'three-stdlib';
 import { Environment, MeshTransmissionMaterial, OrbitControls, useGLTF, PerspectiveCamera } from '@react-three/drei';
 import { Debug, Physics, usePlane, useBox, useConvexPolyhedron, useSphere, useTrimesh, useCylinder } from '@react-three/cannon';
@@ -93,50 +93,65 @@ function Tank(props) {
   );
 }
 
-const Actuator = forwardRef((props, ref2) => {
-  // console.log({ ref2 });
-  const [ref, api] = useCylinder(
+function Actuator(props) {
+  const sp = useRef(props.position);
+  const { up } = props;
+
+  const [ref, api] = useBox(
     () => ({
-      args: [2, 2, 4, 8],
+      args: [5, 5, 5, 4, 1, 4],
       mass: 0,
       ...props,
     }),
     useRef(),
   );
 
-  useEffect(() => {
-    ref2.current = api;
+  useFrame((state, delta) => {
+    sp.current[1] += ((up.current ? -10 : -16) - sp.current[1]) / (20 * (delta * 100));
+    api.position.set(sp.current[0], sp.current[1], sp.current[2]);
   });
 
   return (
     <mesh
       ref={ref}
+      visible
       position={props.position}
-      geometry={new CylinderGeometry(2, 2, 4, 8)}
-      material={new MeshNormalMaterial({ flatShading: true })}
+      geometry={new BoxGeometry(5, 5, 5, 4, 1, 4)}
+      material={new MeshNormalMaterial({ flatShading: true, wireframe: true })}
     />
   );
-});
+}
 
 function App() {
-  const actuatorApi = useRef();
-  const rightActuatorPosition = useRef([5, -14, 0]);
+  const leftActuatorPosition = useRef([-5, -16, 0]);
+  const rightActuatorPosition = useRef([5, -16, 0]);
+  const leftUp = useRef(false);
+  const rightUp = useRef(false);
 
-  const handleKeydown = (e) => {
-    if (e.key === 'ArrowUp') {
-      rightActuatorPosition.current = [rightActuatorPosition.current[0], rightActuatorPosition.current[1] + 0.25, rightActuatorPosition.current[2]];
+  const handleKeyDown = (e) => {
+    if (e.key === 'j') {
+      rightUp.current = true;
     }
-    if (e.key === 'ArrowDown') {
-      rightActuatorPosition.current = [rightActuatorPosition.current[0], rightActuatorPosition.current[1] - 0.25, rightActuatorPosition.current[2]];
-    }
-    if (e.key.indexOf('Arrow') >= 0) {
-      actuatorApi.current.position.set(rightActuatorPosition.current[0], rightActuatorPosition.current[1], rightActuatorPosition.current[2]);
+    if (e.key === 'f') {
+      leftUp.current = true;
     }
   };
+
+  const handleKeyUp = (e) => {
+    if (e.key === 'j') {
+      rightUp.current = false;
+    }
+    if (e.key === 'f') {
+      leftUp.current = false;
+    }
+  };
+
   useEffect(() => {
-    addEventListener('keydown', handleKeydown);
+    addEventListener('keydown', handleKeyDown);
+    addEventListener('keyup', handleKeyUp);
     return () => {
-      removeEventListener('keydown', handleKeydown);
+      removeEventListener('keydown', handleKeyDown);
+      removeEventListener('keyup', handleKeyUp);
     };
   });
 
@@ -155,7 +170,7 @@ function App() {
           blur={0.2}
         />
         <Physics>
-          <Debug color="black" scale={1.1}>
+          <Debug color="white" scale={1}>
             {
               rings.map((ring) => (
                 <Ring
@@ -167,8 +182,12 @@ function App() {
             }
             <Tank />
             <Actuator
+              position={leftActuatorPosition.current}
+              up={leftUp}
+            />
+            <Actuator
               position={rightActuatorPosition.current}
-              ref={actuatorApi}
+              up={rightUp}
             />
           </Debug>
         </Physics>
