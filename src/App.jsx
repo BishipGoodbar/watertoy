@@ -1,55 +1,43 @@
 import React, { Suspense, useEffect, forwardRef, useRef, useState, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { TorusGeometry, PlaneGeometry, MeshNormalMaterial, DoubleSide, Vector3, CylinderGeometry, BoxGeometry } from 'three';
+import { TorusGeometry, TorusKnotGeometry, MeshNormalMaterial, BoxGeometry } from 'three';
 import { Geometry } from 'three-stdlib';
 import { Environment, MeshTransmissionMaterial, OrbitControls, useGLTF, PerspectiveCamera } from '@react-three/drei';
-import { Debug, Physics, usePlane, useBox, useConvexPolyhedron, useSphere, useTrimesh, useCylinder } from '@react-three/cannon';
+import { Debug, Physics, usePlane, useBox, useConvexPolyhedron, useSphere, useTrimesh, useCylinder, useCompoundBody } from '@react-three/cannon';
 import tvStudio from './assets/images/tv_studio_small.hdr';
 import tankModel from './assets/models/tank.gltf';
 import rings from './rings.json';
 import './index.scss';
 
 function Ring(props) {
-  const [ref] = useSphere(() => ({
-    mass: 1,
-    ...props,
-  }));
-
-  return (
-    <mesh
-      ref={ref}
-      position={props.position}
-      geometry={new TorusGeometry(1, 0.25, 8, 12)}
-      material={new MeshNormalMaterial({ flatShading: true })}
-    />
-  );
-}
-
-function Ring2(props) {
-  const geometry = new TorusGeometry(1, 0.5, 6, 12);
-  console.log(geometry);
-  const [ref, api] = useTrimesh(
+  const { position } = props;
+  const shapes = [];
+  const radius = 1.5;
+  const segments = 16;
+  for (let i = 0; i < 1; i += (1 / segments)) {
+    const angle = i * 2 * Math.PI;
+    shapes.push({
+      args: [0.5], position: [radius * Math.cos(angle), 0, radius * Math.sin(angle)], type: 'Sphere',
+    });
+  }
+  const [ref, api] = useCompoundBody(
     () => ({
-      args: [
-        geometry.attributes.position.array,
-        geometry.index.array,
-      ],
       mass: 1,
-      ...props,
+      position,
+      shapes,
     }),
     useRef(),
   );
 
   return (
-    <group
-      ref={ref}
-      {...props}
-      dispose={null}
-    >
-      <mesh geometry={geometry}>
-        <meshNormalMaterial />
-      </mesh>
-    </group>
+    <mesh ref={ref} castShadow receiveShadow>
+      {/* <cylinderGeometry args={[0.25, 0.25, 1.5]} /> */}
+      <meshStandardMaterial wireframe />
+      {/* <mesh rotation={[0, 0, -Math.PI / 2]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.25, 0.25, 4]} />
+        <meshStandardMaterial wireframe />
+      </mesh> */}
+    </mesh>
   );
 }
 
@@ -75,7 +63,8 @@ function Tank(props) {
       dispose={null}
     >
       <mesh geometry={nodes.Tank.geometry}>
-        <MeshTransmissionMaterial
+        <meshNormalMaterial wireframe />
+        {/* <MeshTransmissionMaterial
           transmission={0.9}
           roughness={0.2}
           thickness={1}
@@ -87,7 +76,7 @@ function Tank(props) {
           backside
           // flatShading
           envMapIntensity={1}
-        />
+        /> */}
       </mesh>
     </group>
   );
