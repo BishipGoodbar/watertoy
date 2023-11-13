@@ -12,12 +12,12 @@ import './index.scss';
 function Ring(props) {
   const { position } = props;
   const shapes = [];
-  const radius = 1.5;
+  const radius = 0.75;
   const segments = 16;
   for (let i = 0; i < 1; i += (1 / segments)) {
     const angle = i * 2 * Math.PI;
     shapes.push({
-      args: [0.5], position: [radius * Math.cos(angle), 0, radius * Math.sin(angle)], type: 'Sphere',
+      args: [0.3], position: [radius * Math.cos(angle), 0, radius * Math.sin(angle)], type: 'Sphere',
     });
   }
   const [ref, api] = useCompoundBody(
@@ -88,7 +88,7 @@ function Actuator(props) {
 
   const [ref, api] = useBox(
     () => ({
-      args: [5, 5, 5, 4, 1, 4],
+      args: [6, 6, 6, 4, 1, 4],
       mass: 0,
       ...props,
     }),
@@ -105,7 +105,7 @@ function Actuator(props) {
       ref={ref}
       visible
       position={props.position}
-      geometry={new BoxGeometry(5, 5, 5, 4, 1, 4)}
+      geometry={new BoxGeometry(6, 6, 6, 4, 1, 4)}
       material={new MeshNormalMaterial({ flatShading: true, wireframe: true })}
     />
   );
