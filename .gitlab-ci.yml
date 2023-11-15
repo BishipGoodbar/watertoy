@@ -4,7 +4,7 @@ image: node:lts
 before_script:
   - npm ci
 pages:
- script:
+  script:
     - npm run build
     - cp -a dist/. public/
     - cp public/index.html public/404.html
