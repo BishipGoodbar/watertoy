@@ -6,18 +6,18 @@ import { Environment, MeshTransmissionMaterial, OrbitControls, useGLTF, Perspect
 import { Debug, Physics, usePlane, useBox, useConvexPolyhedron, useSphere, useTrimesh, useCylinder, useCompoundBody } from '@react-three/cannon';
 import tvStudio from './assets/images/tv_studio_small.hdr';
 import tankModel from './assets/models/tank.gltf';
-import rings from './rings.json';
+// import rings from './rings.json';
 import './index.scss';
 
 function Ring(props) {
   const { position } = props;
   const shapes = [];
-  const radius = 0.75;
-  const segments = 16;
+  const radius = 1;
+  const segments = 8;
   for (let i = 0; i < 1; i += (1 / segments)) {
     const angle = i * 2 * Math.PI;
     shapes.push({
-      args: [0.3], position: [radius * Math.cos(angle), 0, radius * Math.sin(angle)], type: 'Sphere',
+      args: [0.4], position: [radius * Math.cos(angle), radius * Math.sin(angle), 0], type: 'Sphere',
     });
   }
   const [ref, api] = useCompoundBody(
@@ -30,14 +30,21 @@ function Ring(props) {
   );
 
   return (
-    <mesh ref={ref} castShadow receiveShadow>
-      {/* <cylinderGeometry args={[0.25, 0.25, 1.5]} /> */}
-      <meshStandardMaterial wireframe />
-      {/* <mesh rotation={[0, 0, -Math.PI / 2]} castShadow receiveShadow>
+    <group>
+      <mesh
+        ref={ref}
+      // castShadow
+      // receiveShadow
+      >
+        {/* <cylinderGeometry args={[0.25, 0.25, 1.5]} /> */}
+        <torusGeometry />
+        <meshStandardMaterial wireframe />
+        {/* <mesh rotation={[0, 0, -Math.PI / 2]} castShadow receiveShadow>
         <cylinderGeometry args={[0.25, 0.25, 4]} />
         <meshStandardMaterial wireframe />
       </mesh> */}
-    </mesh>
+      </mesh>
+    </group>
   );
 }
 
@@ -63,8 +70,8 @@ function Tank(props) {
       dispose={null}
     >
       <mesh geometry={nodes.Tank.geometry}>
-        <meshNormalMaterial wireframe />
-        {/* <MeshTransmissionMaterial
+        {/* <meshNormalMaterial wireframe /> */}
+        <MeshTransmissionMaterial
           transmission={0.9}
           roughness={0.2}
           thickness={1}
@@ -76,7 +83,7 @@ function Tank(props) {
           backside
           // flatShading
           envMapIntensity={1}
-        /> */}
+        />
       </mesh>
     </group>
   );
@@ -85,10 +92,11 @@ function Tank(props) {
 function Actuator(props) {
   const sp = useRef(props.position);
   const { up } = props;
+  const size = 8;
 
   const [ref, api] = useBox(
     () => ({
-      args: [6, 6, 6, 4, 1, 4],
+      args: [size, size, size, 4, 4, 4],
       mass: 0,
       ...props,
     }),
@@ -105,17 +113,21 @@ function Actuator(props) {
       ref={ref}
       visible
       position={props.position}
-      geometry={new BoxGeometry(6, 6, 6, 4, 1, 4)}
+      geometry={new BoxGeometry(size, size, size, 4, 1, 4)}
       material={new MeshNormalMaterial({ flatShading: true, wireframe: true })}
     />
   );
 }
 
 function App() {
+  const [rings, setRings] = useState([]);
   const leftActuatorPosition = useRef([-5, -16, 0]);
   const rightActuatorPosition = useRef([5, -16, 0]);
   const leftUp = useRef(false);
   const rightUp = useRef(false);
+  const ringAmount = 10;
+  const tankSize = { x: 6, y: 6, z: 2 };
+  const tankOffset = { x: 0, y: -2 };
 
   const handleKeyDown = (e) => {
     if (e.key === 'j') {
@@ -135,14 +147,25 @@ function App() {
     }
   };
 
+  const createRings = () => {
+    const nextRings = [];
+    for (let id = 0; id < ringAmount; id += 1) {
+      const position = [Math.random() * tankSize.x, Math.random() * tankSize.y, Math.random() * tankSize.z];
+      const rotation = [Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI];
+      nextRings.push({ id, position, rotation });
+    }
+    setRings(nextRings);
+  };
+
   useEffect(() => {
     addEventListener('keydown', handleKeyDown);
     addEventListener('keyup', handleKeyUp);
+    createRings();
     return () => {
       removeEventListener('keydown', handleKeyDown);
       removeEventListener('keyup', handleKeyUp);
     };
-  });
+  }, []);
 
   return (
     <div className="app">
