@@ -4,8 +4,10 @@ image: node:lts
 before_script:
   - npm ci
 pages:
-  script:
+ script:
     - npm run build
+    - cp -a dist/. public/
+    - cp public/index.html public/404.html
   artifacts:
     paths:
       # The folder that contains the files to be exposed at the Page URL

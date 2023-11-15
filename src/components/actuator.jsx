@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { useBox } from '@react-three/cannon';
-import { BoxGeometry, MeshNormalMaterial } from 'three';
+import { BoxGeometry } from 'three';
+import { MeshTransmissionMaterial } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 
 function Actuator(props) {
@@ -28,8 +29,21 @@ function Actuator(props) {
       visible
       position={props.position}
       geometry={new BoxGeometry(size, size, size, 4, 1, 4)}
-      material={new MeshNormalMaterial({ flatShading: true, wireframe: true })}
-    />
+    >
+      <MeshTransmissionMaterial
+        transmission={0.9}
+        roughness={0.2}
+        thickness={1}
+        ior={1.8}
+        reflectivity={0.01}
+        color={0xeeeeee}
+        chromaticAberration={1}
+        backsideThickness={1}
+        backside
+        // flatShading
+        envMapIntensity={1}
+      />
+    </mesh>
   );
 }
 

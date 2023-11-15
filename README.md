@@ -1,1 +1,1 @@
-Game
+Water Rings Game

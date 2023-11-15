@@ -15,8 +15,8 @@ function App() {
   const leftUp = useRef(false);
   const rightUp = useRef(false);
   const ringAmount = 10;
-  const tankSize = { x: 6, y: 6, z: 2 };
-  const tankOffset = { x: 0, y: -2 };
+  const tankSize = { x: 14, y: 12, z: 2 };
+  const tankOffset = { x: 0, y: 6, z: 0 };
 
   const handleKeyDown = (e) => {
     if (e.key === 'j') {
@@ -40,9 +40,9 @@ function App() {
     const nextRings = [];
     for (let id = 0; id < ringAmount; id += 1) {
       const position = [
-        Math.random() * tankSize.x + tankOffset.x,
-        Math.random() * tankSize.y + tankOffset.y,
-        Math.random() * tankSize.z + tankOffset.z,
+        (Math.random() * tankSize.x) - (tankSize.x / 2) + tankOffset.x,
+        (Math.random() * tankSize.y) - (tankSize.y / 2) + tankOffset.y,
+        (Math.random() * tankSize.z) - (tankSize.z / 2) + tankOffset.z,
       ];
       const rotation = [
         Math.random() * Math.PI,
@@ -79,26 +79,26 @@ function App() {
           blur={0.2}
         />
         <Physics>
-          <Debug color="white" scale={1}>
-            {
-              rings.map((ring) => (
-                <Ring
-                  key={ring.id}
-                  position={ring.position}
-                  rotation={ring.rotation}
-                />
-              ))
-            }
-            <Tank />
-            <Actuator
-              position={leftActuatorPosition.current}
-              up={leftUp}
-            />
-            <Actuator
-              position={rightActuatorPosition.current}
-              up={rightUp}
-            />
-          </Debug>
+          {/* <Debug color="white" scale={1}> */}
+          {
+            rings.map((ring) => (
+              <Ring
+                key={ring.id}
+                position={ring.position}
+                rotation={ring.rotation}
+              />
+            ))
+          }
+          <Tank />
+          <Actuator
+            position={leftActuatorPosition.current}
+            up={leftUp}
+          />
+          <Actuator
+            position={rightActuatorPosition.current}
+            up={rightUp}
+          />
+          {/* </Debug> */}
         </Physics>
         <OrbitControls />
       </Canvas>
