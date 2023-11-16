@@ -3,7 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { Debug, Physics } from '@react-three/cannon';
 import tvStudio from './assets/images/tv_studio_small.hdr';
-import Tank from './components/tank2';
+import Tank from './components/tank';
 import Ring from './components/ring';
 import Actuator from './components/actuator';
 import './index.scss';
