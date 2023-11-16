@@ -14,7 +14,7 @@ function App() {
   const rightActuatorPosition = useRef([5, -16, 0]);
   const leftUp = useRef(false);
   const rightUp = useRef(false);
-  const ringAmount = 5;
+  const ringAmount = 9;
   const tankSize = { x: 14, y: 12, z: 2 };
   const tankOffset = { x: 0, y: 6, z: 0 };
 
@@ -66,7 +66,7 @@ function App() {
 
   return (
     <div className="app">
-      <Canvas dpr={[0.5, 1]}>
+      <Canvas dpr={[0.2, 0.7]}>
         <PerspectiveCamera
           makeDefault
           far={200}
