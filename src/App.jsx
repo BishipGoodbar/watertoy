@@ -3,7 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { Debug, Physics } from '@react-three/cannon';
 import tvStudio from './assets/images/tv_studio_small.hdr';
-import Tank from './components/tank';
+import Tank from './components/tank2';
 import Ring from './components/ring';
 import Actuator from './components/actuator';
 import './index.scss';
@@ -14,7 +14,7 @@ function App() {
   const rightActuatorPosition = useRef([5, -16, 0]);
   const leftUp = useRef(false);
   const rightUp = useRef(false);
-  const ringAmount = 10;
+  const ringAmount = 5;
   const tankSize = { x: 14, y: 12, z: 2 };
   const tankOffset = { x: 0, y: 6, z: 0 };
 
@@ -66,7 +66,7 @@ function App() {
 
   return (
     <div className="app">
-      <Canvas>
+      <Canvas dpr={[0.5, 1]}>
         <PerspectiveCamera
           makeDefault
           far={200}
@@ -78,8 +78,10 @@ function App() {
           files={tvStudio}
           blur={0.2}
         />
-        <Physics>
-          {/* <Debug color="white" scale={1}> */}
+        <Physics
+          allowSleep
+        >
+          {/* <Debug color="black" scale={1.0}> */}
           {
             rings.map((ring) => (
               <Ring

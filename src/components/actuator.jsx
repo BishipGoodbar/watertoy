@@ -26,7 +26,7 @@ function Actuator(props) {
   return (
     <mesh
       ref={ref}
-      visible
+      visible={false}
       position={props.position}
       geometry={new BoxGeometry(size, size, size, 4, 1, 4)}
     >

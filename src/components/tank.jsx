@@ -1,10 +1,13 @@
 import React, { useRef } from 'react';
 import { useGLTF, MeshTransmissionMaterial } from '@react-three/drei';
 import { useTrimesh } from '@react-three/cannon';
-import tankModel from '../assets/models/tank.gltf';
+import tankModel from '../assets/models/tank2.gltf';
 
 function Tank(props) {
-  const { nodes } = useGLTF(tankModel);
+  const gltf = useGLTF(tankModel);
+  const { nodes, scene } = gltf;
+
+  // nodes.Tank.material = new MeshTransmissionMaterial();
 
   const [ref, api] = useTrimesh(
     () => ({
@@ -23,23 +26,9 @@ function Tank(props) {
       ref={ref}
       {...props}
       dispose={null}
+      visible
     >
-      <mesh geometry={nodes.Tank.geometry}>
-        {/* <meshNormalMaterial wireframe /> */}
-        <MeshTransmissionMaterial
-          transmission={0.9}
-          roughness={0.2}
-          thickness={1}
-          ior={1.8}
-          reflectivity={0.01}
-          color={0xeeeeee}
-          chromaticAberration={1}
-          backsideThickness={1}
-          backside
-          // flatShading
-          envMapIntensity={1}
-        />
-      </mesh>
+      <primitive object={scene} />
     </group>
   );
 }
