@@ -14,7 +14,7 @@ function App() {
   const rightActuatorPosition = useRef([5, -16, 0]);
   const leftUp = useRef(false);
   const rightUp = useRef(false);
-  const ringAmount = 9;
+  const ringAmount = 15;
   const tankSize = { x: 14, y: 12, z: 2 };
   const tankOffset = { x: 0, y: 6, z: 0 };
 
@@ -72,7 +72,7 @@ function App() {
           far={200}
           near={0.1}
           fov={45}
-          position={[0, 0, 40]}
+          position={[0, 0, 50]}
         />
         <Environment
           files={tvStudio}

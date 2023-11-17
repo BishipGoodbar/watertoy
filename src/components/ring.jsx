@@ -4,9 +4,16 @@ import { MeshTransmissionMaterial } from '@react-three/drei';
 
 function Ring(props) {
   const { position, rotation } = props;
+  const colors = [
+    0xee6688,
+    0x00dd44,
+    0x1122ff,
+  ];
+  const randomColor = () => colors[Math.floor(Math.random() * colors.length)];
+
   const shapes = [];
   const radius = 1;
-  const segments = 6;
+  const segments = 4;
   for (let i = 0; i < 1; i += (1 / segments)) {
     const angle = i * 2 * Math.PI;
     shapes.push({
@@ -37,7 +44,7 @@ function Ring(props) {
           thickness={0.5}
           ior={1.5}
           reflectivity={0.1}
-          color={0xee6688}
+          color={randomColor()}
           backsideThickness={0.1}
         // wireframe
         />

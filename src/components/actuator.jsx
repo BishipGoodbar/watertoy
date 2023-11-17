@@ -7,7 +7,7 @@ import { useFrame } from '@react-three/fiber';
 function Actuator(props) {
   const sp = useRef(props.position);
   const { up } = props;
-  const size = 8;
+  const size = 10;
 
   const [ref, api] = useBox(
     () => ({

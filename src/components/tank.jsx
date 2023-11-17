@@ -1,12 +1,14 @@
 import React, { useRef } from 'react';
 import { useGLTF, MeshTransmissionMaterial } from '@react-three/drei';
 import { useTrimesh, useBox } from '@react-three/cannon';
-import tankModel from '../assets/models/tank3.gltf';
+import tankModel from '../assets/models/tank.gltf';
 
 function Tank(props) {
   const gltf = useGLTF(tankModel);
   const { nodes, scene } = gltf;
   const bodies = [];
+
+  console.log(nodes);
 
   nodes.Physics.children.forEach((obj) => {
     obj.visible = false;
@@ -26,12 +28,11 @@ function Tank(props) {
   // console.log({ bodies });
 
   return (
-    <group
-      {...props}
-    >
+    <group>
       {
         bodies.map((body) => (
           <mesh
+            key={body.name}
             visible={false}
             position={[body.position]}
             rotation={[body.rotation]}
