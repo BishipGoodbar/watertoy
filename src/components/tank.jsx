@@ -1,13 +1,14 @@
 import React, { useRef } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { useBox } from '@react-three/cannon';
-import tankModel from '../assets/models/tank2.glb';
+import tankModel from '../assets/models/tank3.glb';
 
 function Tank({ setTargets }) {
   const gltf = useGLTF(tankModel);
   const { nodes } = gltf;
   const bodies = [];
 
+  // useEffect(() => {
   nodes.Physics.children.forEach((obj) => {
     obj.visible = false;
     const [body] = useBox(
@@ -28,6 +29,15 @@ function Tank({ setTargets }) {
     bodies.push(body);
   });
 
+  nodes.Scene.children.forEach((obj) => {
+    if (obj.isObject3D) {
+      obj.castShadow = true;
+      obj.receiveShadow = true;
+    }
+    // console.log(obj.isObject3D);
+  });
+  // }, [nodes]);
+
   setTargets(nodes.Targets.children.map((t) => [t.position.x, t.position.y, t.position.z]));
 
   return (
@@ -39,7 +49,6 @@ function Tank({ setTargets }) {
             visible={false}
             position={[body.position]}
             rotation={[body.rotation]}
-            receiveShadow
           >
             <boxGeometry />
           </mesh>

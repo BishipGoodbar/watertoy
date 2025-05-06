@@ -121,7 +121,7 @@ function App() {
     <div className="app">
       <Canvas dpr={gyroAvailable ? 0.3 : 1} shadows>
         <group ref={cameraGroup}>
-          <PerspectiveCamera makeDefault far={200} near={0.1} fov={35} position={[0, 0, 10]} />
+          <PerspectiveCamera makeDefault far={200} near={0.1} fov={35} position={[0, 0, 15]} />
         </group>
         <GyroCameraController cameraGroup={cameraGroup} useOrientation={gyroEnabled} />
         <Environment files={tvStudio} blur={0.1} background />
@@ -130,7 +130,7 @@ function App() {
           castShadow
           shadow-mapSize={512}
           shadow-bias={0.0001}
-          position={[0, 4, -2]}
+          position={[0, 4, 2]}
         />
         <GravityArrow gravity={gravity} />
         <Physics
