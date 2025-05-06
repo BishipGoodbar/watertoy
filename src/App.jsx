@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { Physics, Debug } from '@react-three/cannon';
 import { Euler, Quaternion, Vector3, MathUtils } from 'three';
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import GyroCameraController from './components/gyroCamera';
 
 import tvStudio from './assets/images/tv_studio_small.hdr';
@@ -133,11 +134,12 @@ function App() {
           <PerspectiveCamera makeDefault far={200} near={0.1} fov={35} position={[0, 0, gyroEnabled ? 20 : 60]} />
         </group>
         {gyroEnabled && (<GyroCameraController cameraGroup={cameraGroup} useOrientation={gyroEnabled} />)}
-        <Environment files={tvStudio} intensity={10} blur={0.2} background />
+        <Environment files={tvStudio} intensity={1} blur={0.1} background />
+
         <directionalLight
-          intensity={2}
+          intensity={4}
           castShadow
-          shadow-bias={0.001}
+          shadow-bias={0.0001}
           shadow-mapSize-width={512}
           shadow-mapSize-height={512}
           shadow-camera-near={1}
@@ -146,7 +148,7 @@ function App() {
           shadow-camera-right={50}
           shadow-camera-top={50}
           shadow-camera-bottom={-50}
-          position={[2, 2, 2]}
+          position={[2, 4, -2]}
         />
         <GravityArrow gravity={gravity} />
         <Physics
@@ -177,6 +179,13 @@ function App() {
           enabled={!gyroEnabled}
           enableZoom={false}
         />
+        <EffectComposer>
+          <Bloom
+            luminanceThreshold={0.9}
+            luminanceSmoothing={0.9}
+            intensity={0.5}
+          />
+        </EffectComposer>
       </Canvas>
 
       <div className="mobile-controls">

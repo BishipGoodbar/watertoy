@@ -80,8 +80,8 @@ function Ring({ position, rotation, color, targets }) {
           color={isAsleep ? 'gold' : originalColor.current}
           transparent
           opacity={isAsleep ? 1 : 0.5}
-          metalness={0.5}
-          roughness={0.2}
+          metalness={isAsleep ? 0.8 : 0.2}
+          roughness={isAsleep ? 0.2 : 0.8}
         />
       </mesh>
     </group>
