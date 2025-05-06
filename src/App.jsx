@@ -1,65 +1,88 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { Environment, PerspectiveCamera } from '@react-three/drei';
 import { Debug, Physics } from '@react-three/cannon';
-import { Euler, Quaternion, Vector3, MathUtils, Group } from 'three';
+import {
+  Euler,
+  Quaternion,
+  Vector3,
+  MathUtils
+} from 'three';
+
 import tvStudio from './assets/images/tv_studio_small.hdr';
 import Tank from './components/tank';
 import Ring from './components/ring';
 import Actuator from './components/actuator';
 import GravityArrow from './components/gravityArrow';
+
 import './index.scss';
 
+const isOrientationAvailable = typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function';
+
 const degToRad = (degrees) => degrees * Math.PI / 180;
-function GyroCameraController({ cameraGroup }) {
+
+function GyroCameraController({ cameraGroup, useOrientation }) {
   const deviceOrientation = useRef({ alpha: 0, beta: 0, gamma: 0 });
   const screenOrientation = useRef(window.orientation || 0);
 
   const _zee = new Vector3(0, 0, 1);
   const _euler = new Euler();
   const _q0 = new Quaternion();
-  const _q1 = new Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // -PI/2 around X
+  const _q1 = new Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
   const _orientationQuat = new Quaternion();
   const _targetPosition = new Vector3();
+  const mouse = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    const handleOrientation = (event) => {
-      deviceOrientation.current = event;
-    };
-    const handleScreenOrientation = () => {
-      screenOrientation.current = window.orientation || 0;
-    };
+    if (useOrientation) {
+      const handleOrientation = (event) => {
+        deviceOrientation.current = event;
+      };
+      const handleScreenOrientation = () => {
+        screenOrientation.current = window.orientation || 0;
+      };
 
-    window.addEventListener('deviceorientation', handleOrientation, true);
-    window.addEventListener('orientationchange', handleScreenOrientation);
+      window.addEventListener('deviceorientation', handleOrientation, true);
+      window.addEventListener('orientationchange', handleScreenOrientation);
 
-    return () => {
-      window.removeEventListener('deviceorientation', handleOrientation, true);
-      window.removeEventListener('orientationchange', handleScreenOrientation);
-    };
-  }, []);
+      return () => {
+        window.removeEventListener('deviceorientation', handleOrientation, true);
+        window.removeEventListener('orientationchange', handleScreenOrientation);
+      };
+    } else {
+      const handleMouseMove = (event) => {
+        mouse.current.x = (event.clientX / window.innerWidth - 0.5) * 2;
+        mouse.current.y = (event.clientY / window.innerHeight - 0.5) * -2;
+      };
+
+      window.addEventListener('mousemove', handleMouseMove);
+      return () => window.removeEventListener('mousemove', handleMouseMove);
+    }
+  }, [useOrientation]);
 
   useFrame(() => {
     if (!cameraGroup.current) return;
 
-    const { alpha, beta, gamma } = deviceOrientation.current;
-    const orient = MathUtils.degToRad(screenOrientation.current || 0);
+    if (useOrientation) {
+      const { alpha, beta, gamma } = deviceOrientation.current;
+      const orient = MathUtils.degToRad(screenOrientation.current || 0);
 
-    const a = alpha ? MathUtils.degToRad(alpha) : 0;
-    const b = beta ? MathUtils.degToRad(beta) : 0;
-    const g = gamma ? MathUtils.degToRad(gamma) : 0;
+      const a = alpha ? MathUtils.degToRad(alpha) : 0;
+      const b = beta ? MathUtils.degToRad(beta) : 0;
+      const g = gamma ? MathUtils.degToRad(gamma) : 0;
 
-    _euler.set(b, a, -g, 'YXZ');
-    _orientationQuat.setFromEuler(_euler);
-    _orientationQuat.multiply(_q1);
-    _orientationQuat.multiply(_q0.setFromAxisAngle(_zee, -orient));
+      _euler.set(b, a, -g, 'YXZ');
+      _orientationQuat.setFromEuler(_euler);
+      _orientationQuat.multiply(_q1);
+      _orientationQuat.multiply(_q0.setFromAxisAngle(_zee, -orient));
 
-    const forward = new Vector3(0, 0, 1).applyQuaternion(_orientationQuat);
-    _targetPosition.copy(forward).multiplyScalar(50);
+      const forward = new Vector3(0, 0, 1).applyQuaternion(_orientationQuat);
+      _targetPosition.copy(forward).multiplyScalar(50);
+    } else {
+      _targetPosition.set(mouse.current.x * 10, mouse.current.y * 10, 50);
+    }
 
-    // LERP the position smoothly
     cameraGroup.current.position.lerp(_targetPosition, 0.1);
-
     cameraGroup.current.children[0]?.lookAt(0, 0, 0);
   });
 
@@ -110,22 +133,28 @@ function App() {
   };
 
   const handleOrientationForGravity = ({ alpha, beta, gamma }) => {
-    const deviceEuler = new Euler(
-      degToRad(beta),
-      degToRad(alpha),
-      -degToRad(gamma),
-      'YXZ',
-    );
+    const zee = new Vector3(0, 0, 1);
+    const euler = new Euler();
+    const q0 = new Quaternion();
+    const q1 = new Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // -PI/2 around X
 
-    const correctionEuler = new Euler(degToRad(90), 0, 0, 'XYZ');
+    const orient = window.orientation ? MathUtils.degToRad(window.orientation) : 0;
 
-    const gravityVector = new Vector3(0, 90, 0)
-      .applyEuler(deviceEuler)
-      .applyEuler(correctionEuler);
+    const a = alpha ? MathUtils.degToRad(alpha) : 0;
+    const b = beta ? MathUtils.degToRad(beta) : 0;
+    const g = gamma ? MathUtils.degToRad(gamma) : 0;
 
-    const { x, y, z } = gravityVector;
-    setGravity([x, y, z]);
+    // Note the NEGATIVE gamma to correct left/right inversion
+    euler.set(b, -a, -g, 'YXZ');
+    const orientationQuat = new Quaternion().setFromEuler(euler);
+
+    orientationQuat.multiply(q1);
+    orientationQuat.multiply(q0.setFromAxisAngle(zee, -orient));
+
+    const gravityVec = new Vector3(0, -45, 0).applyQuaternion(orientationQuat);
+    setGravity([gravityVec.x, gravityVec.y, gravityVec.z]);
   };
+
 
   const enableGyro = async () => {
     try {
@@ -167,8 +196,8 @@ function App() {
         <group ref={cameraGroup}>
           <PerspectiveCamera makeDefault far={200} near={0.1} fov={45} position={[0, 0, 10]} />
         </group>
-        <GyroCameraController cameraGroup={cameraGroup} damping={0.01} />
-        <Environment files={tvStudio} blur={0.2} background />
+        <GyroCameraController cameraGroup={cameraGroup} useOrientation={gyroEnabled} />
+        <Environment files={tvStudio} blur={0.1} background />
         <directionalLight
           intensity={1}
           castShadow
@@ -186,7 +215,6 @@ function App() {
           allowSleep={false}
           tolerance={0.01}
         >
-          {/* <Debug color="black" scale={1}> */}
           {rings.map((ring) => (
             <Ring
               key={ring.id}
@@ -198,7 +226,6 @@ function App() {
           <Tank />
           <Actuator position={leftActuatorPosition.current} up={leftUp} />
           <Actuator position={rightActuatorPosition.current} up={rightUp} />
-          {/* </Debug> */}
         </Physics>
       </Canvas>
 
@@ -209,7 +236,6 @@ function App() {
           onPointerDown={() => { leftUp.current = true; }}
           onPointerUp={() => { leftUp.current = false; }}
         >
-          Left
         </button>
         <button
           type="button"
@@ -217,11 +243,10 @@ function App() {
           onPointerDown={() => { rightUp.current = true; }}
           onPointerUp={() => { rightUp.current = false; }}
         >
-          Right
         </button>
       </div>
 
-      {!gyroEnabled && (
+      {isOrientationAvailable && !gyroEnabled && (
         <button
           type="button"
           className="enable-gyro"
