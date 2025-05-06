@@ -12,34 +12,37 @@ html, body {
 #root, .app {
   width: 100%;
   height: 100%;
+
+  & * {
+    user-select: none;
+    touch-action: none;
+  }
 }
 
-* {
-  user-select: none;
-  touch-action: none;
-}
+
 
 .hidden {
   opacity: 0;
   visibility: hidden;
 }
 
-.enable-gyro {
-  position: fixed;
-  bottom: 8rem;
-  left: 50%;
-  font-size: 2rem;
-  padding: .75rem 1.25rem;
-  border: 2px solid;
-  border-radius: 1.5rem;
-  touch-action: manipulation;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
+.gyro {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 
-  margin: 1rem;
-  transform: translateX(-50%);
+  transition: visibility .5s, opacity .5s;
+
+  button {
+    font-size: 2rem;
+    margin: 1rem;
+    width: 32rem;
+    text-transform: uppercase;
+    letter-spacing: .1rem;
+  }
 }
 
 .mobile-controls {
@@ -49,11 +52,11 @@ html, body {
   right: 3rem;
   display: flex;
   gap: 3rem;
+  justify-content: space-between;
 
   .control-button {
-    // margin: 3rem;
-    // width: calc(50% - 3rem);
     width: 50%;
+    max-width: 15rem;
     height: 15rem;
     border-radius: 1rem;
     border: none;

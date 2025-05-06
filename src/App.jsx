@@ -2,12 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { Debug, Physics } from '@react-three/cannon';
-import {
-  Euler,
-  Quaternion,
-  Vector3,
-  MathUtils,
-} from 'three';
+import { Euler, Quaternion, Vector3, MathUtils } from 'three';
 import GyroCameraController from './components/gyroCamera';
 
 import tvStudio from './assets/images/tv_studio_small.hdr';
@@ -18,11 +13,14 @@ import GravityArrow from './components/gravityArrow';
 
 import './index.scss';
 
-const isOrientationAvailable = typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function';
+const gyroAvailable = typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function';
+const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
 function App() {
   const [rings, setRings] = useState([]);
+  const [targets, setTargets] = useState([]);
   const [gyroEnabled, setGyroEnabled] = useState(false);
+  const [disableGyro, setDisableGyro] = useState(false);
   const [gravity, setGravity] = useState([0, -50, 0]);
   const leftActuatorPosition = useRef([-5, -16, 0]);
   const rightActuatorPosition = useRef([5, -16, 0]);
@@ -75,7 +73,6 @@ function App() {
     const b = beta ? MathUtils.degToRad(beta) : 0;
     const g = gamma ? MathUtils.degToRad(gamma) : 0;
 
-    // Note the NEGATIVE gamma to correct left/right inversion
     euler.set(b, -a, -g, 'YXZ');
     const orientationQuat = new Quaternion().setFromEuler(euler);
 
@@ -122,7 +119,7 @@ function App() {
 
   return (
     <div className="app">
-      <Canvas dpr={isOrientationAvailable ? 0.3 : 1} shadows>
+      <Canvas dpr={gyroAvailable ? 0.3 : 1} shadows>
         <group ref={cameraGroup}>
           <PerspectiveCamera makeDefault far={200} near={0.1} fov={35} position={[0, 0, 10]} />
         </group>
@@ -134,7 +131,6 @@ function App() {
           shadow-mapSize={512}
           shadow-bias={0.0001}
           position={[0, 4, -2]}
-        // target-position={[0, -1, 0]}
         />
         <GravityArrow gravity={gravity} />
         <Physics
@@ -142,18 +138,22 @@ function App() {
           broadphase="SAP"
           quatNormalizeFast
           iterations={6}
-          allowSleep={false}
+          // maxSubSteps={1}
+          // shouldInvalidate?: boolean;
+          // stepSize={2}
+          // allowSleep={false}
           tolerance={0.01}
         >
-          {rings.map((ring) => (
+          {targets.length > 0 && rings.map((ring) => (
             <Ring
               key={ring.id}
               position={ring.position}
               rotation={ring.rotation}
               color={ring.color}
+              targets={targets}
             />
           ))}
-          <Tank />
+          <Tank setTargets={setTargets} />
           <Actuator position={leftActuatorPosition.current} up={leftUp} />
           <Actuator position={rightActuatorPosition.current} up={rightUp} />
         </Physics>
@@ -162,28 +162,32 @@ function App() {
 
       <div className="mobile-controls">
         <div
-          // type="button"
           className="control-button left"
           onPointerDown={() => { leftUp.current = true; }}
           onPointerUp={() => { leftUp.current = false; }}
         />
         <div
-          // type="button"
           className="control-button right"
           onPointerDown={() => { rightUp.current = true; }}
           onPointerUp={() => { rightUp.current = false; }}
         />
       </div>
 
-      {isOrientationAvailable && !gyroEnabled && (
+      <div className={`gyro ${gyroEnabled || disableGyro || !gyroAvailable ? 'hidden' : ''}`}>
         <button
           type="button"
-          className="enable-gyro"
           onClick={enableGyro}
         >
           Enable Gyroscope
         </button>
-      )}
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => { setDisableGyro(true); }}
+        >
+          Use Without Gyroscope
+        </button>
+      </div>
     </div>
   );
 }

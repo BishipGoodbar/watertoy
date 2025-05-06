@@ -1,18 +1,12 @@
-import React, { useRef, useState } from 'react';
-import { useGLTF, MeshTransmissionMaterial } from '@react-three/drei';
-import { useTrimesh, useBox } from '@react-three/cannon';
-import { useFrame } from '@react-three/fiber';
-import tankModel from '../assets/models/tank.gltf';
+import React, { useRef } from 'react';
+import { useGLTF } from '@react-three/drei';
+import { useBox } from '@react-three/cannon';
+import tankModel from '../assets/models/tank2.gltf';
 
-function Tank() {
+function Tank({ setTargets }) {
   const gltf = useGLTF(tankModel);
   const { nodes } = gltf;
   const bodies = [];
-  const button1 = useRef();
-  const button2 = useRef();
-
-  const buttons = [button1, button2];
-  const buttonStates = useRef([0, 0]);
 
   nodes.Physics.children.forEach((obj) => {
     obj.visible = false;
@@ -34,6 +28,8 @@ function Tank() {
     bodies.push(body);
   });
 
+  setTargets(nodes.Targets.children.map((t) => [t.position.x, t.position.y, t.position.z]));
+
   return (
     <group>
       {
@@ -43,6 +39,7 @@ function Tank() {
             visible={false}
             position={[body.position]}
             rotation={[body.rotation]}
+            receiveShadow
           >
             <boxGeometry />
           </mesh>
@@ -52,22 +49,6 @@ function Tank() {
         key="scene"
         object={nodes.Scene}
       />
-      {
-        nodes.Interactive.children.map((button, index) => (
-          <primitive
-            // scale={[1, 1, buttonLeftDown.current ? 2 : 1]}
-            key={button.name}
-            ref={buttons[index]}
-            object={button}
-            onPointerDown={() => {
-              buttonStates.current[index] = 1;
-            }}
-            onPointerUp={() => {
-              buttonStates.current[index] = 0;
-            }}
-          />
-        ))
-      }
     </group>
   );
 }

@@ -1,30 +1,29 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useCompoundBody } from '@react-three/cannon';
+import { Color, Vector3 } from 'three';
 
-function Ring(props) {
-  const { position, rotation, color } = props;
-  const shapes = [];
+function Ring({ position, rotation, color, targets }) {
   const radius = 1.5;
   const segments = 10;
-  for (let i = 0; i < 1; i += (1 / segments)) {
+  const shapes = [];
+
+  for (let i = 0; i < 1; i += 1 / segments) {
     const angle = i * 2 * Math.PI;
     shapes.push({
       type: 'Sphere',
-      // type: 'Box',
-      args: [0.5, 0.5, 1],
+      args: [0.33, 0.33],
       position: [radius * Math.cos(angle), radius * Math.sin(angle), 0],
-      rotation: [0, 0, (i * 360) * (Math.PI / 180)],
+      rotation: [0, 0, angle],
     });
   }
 
   const [ref, api] = useCompoundBody(
     () => ({
-      // linearDamping: 0.001,
-      // angularDamping: 0.001,
       mass: 1,
       position,
       rotation,
       shapes,
+      linearDamping: 0.5,
       material: {
         friction: 0.01,
         restitution: 0.9,
@@ -33,16 +32,44 @@ function Ring(props) {
     useRef(),
   );
 
+  const [isAsleep, setIsAsleep] = useState(false);
+  const sleepTimer = useRef(null);
+  const originalColor = useRef(new Color(color));
+
+  useEffect(() => {
+    const unsubVelocity = api.velocity.subscribe((v) => {
+      const speed = Math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2);
+      if (speed < 1) {
+        if (!sleepTimer.current) {
+          sleepTimer.current = setTimeout(() => {
+            const unsubscribe = api.position.subscribe((pos) => {
+              console.log('💤 Ring asleep at position:', pos, targets);
+              unsubscribe();
+            });
+            setIsAsleep(true);
+          }, 500);
+        }
+      } else {
+        if (sleepTimer.current) {
+          clearTimeout(sleepTimer.current);
+          sleepTimer.current = null;
+        }
+        if (isAsleep) setIsAsleep(false);
+      }
+    });
+
+    return () => {
+      unsubVelocity();
+      if (sleepTimer.current) clearTimeout(sleepTimer.current);
+    };
+  }, [api]);
+
   return (
     <group>
-      <mesh ref={ref}>
-        <torusGeometry
-          args={[radius, 0.33]}
-          castShadow
-          receiveShadow
-        />
+      <mesh ref={ref} castShadow receiveShadow>
+        <torusGeometry args={[radius, 0.33]} />
         <meshStandardMaterial
-          color={color}
+          color={isAsleep ? 'gray' : originalColor.current}
           transparent
           opacity={0.5}
           metalness={0.5}
