@@ -43,10 +43,10 @@ html, body {
 
 canvas {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 90% !important;
+  // top: 0;
+  // left: 0;
+  // right: 0;
+  // height: calc(100% - 50px) !important;
   // bottom: 100px;
 }
 

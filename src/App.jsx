@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Environment, PerspectiveCamera } from '@react-three/drei';
 import { Debug, Physics } from '@react-three/cannon';
-import { Euler, Vector3 } from 'three';
+import { Euler, Quaternion, Vector3, MathUtils, Group } from 'three';
 import tvStudio from './assets/images/tv_studio_small.hdr';
 import Tank from './components/tank';
 import Ring from './components/ring';
@@ -11,36 +11,82 @@ import GravityArrow from './components/gravityArrow';
 import './index.scss';
 
 const degToRad = (degrees) => degrees * Math.PI / 180;
+function GyroCameraController({ cameraGroup }) {
+  const deviceOrientation = useRef({ alpha: 0, beta: 0, gamma: 0 });
+  const screenOrientation = useRef(window.orientation || 0);
+
+  const _zee = new Vector3(0, 0, 1);
+  const _euler = new Euler();
+  const _q0 = new Quaternion();
+  const _q1 = new Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // -PI/2 around X
+  const _orientationQuat = new Quaternion();
+  const _targetPosition = new Vector3();
+
+  useEffect(() => {
+    const handleOrientation = (event) => {
+      deviceOrientation.current = event;
+    };
+    const handleScreenOrientation = () => {
+      screenOrientation.current = window.orientation || 0;
+    };
+
+    window.addEventListener('deviceorientation', handleOrientation, true);
+    window.addEventListener('orientationchange', handleScreenOrientation);
+
+    return () => {
+      window.removeEventListener('deviceorientation', handleOrientation, true);
+      window.removeEventListener('orientationchange', handleScreenOrientation);
+    };
+  }, []);
+
+  useFrame(() => {
+    if (!cameraGroup.current) return;
+
+    const { alpha, beta, gamma } = deviceOrientation.current;
+    const orient = MathUtils.degToRad(screenOrientation.current || 0);
+
+    const a = alpha ? MathUtils.degToRad(alpha) : 0;
+    const b = beta ? MathUtils.degToRad(beta) : 0;
+    const g = gamma ? MathUtils.degToRad(gamma) : 0;
+
+    _euler.set(b, a, -g, 'YXZ');
+    _orientationQuat.setFromEuler(_euler);
+    _orientationQuat.multiply(_q1);
+    _orientationQuat.multiply(_q0.setFromAxisAngle(_zee, -orient));
+
+    const forward = new Vector3(0, 0, 1).applyQuaternion(_orientationQuat);
+    _targetPosition.copy(forward).multiplyScalar(50);
+
+    // LERP the position smoothly
+    cameraGroup.current.position.lerp(_targetPosition, 0.1);
+
+    cameraGroup.current.children[0]?.lookAt(0, 0, 0);
+  });
+
+  return null;
+}
 
 function App() {
   const [rings, setRings] = useState([]);
   const [gyroEnabled, setGyroEnabled] = useState(false);
-  const [gravity, setGravity] = useState([0, -90, 0]);
+  const [gravity, setGravity] = useState([0, -50, 0]);
   const leftActuatorPosition = useRef([-5, -16, 0]);
   const rightActuatorPosition = useRef([5, -16, 0]);
   const leftUp = useRef(false);
   const rightUp = useRef(false);
+  const cameraGroup = useRef();
   const ringAmount = 10;
   const tankSize = { x: 14, y: 12, z: 2 };
   const tankOffset = { x: 0, y: 6, z: 0 };
-  const cameraRotation = useRef([0, 0, 0]);
 
   const handleKeyDown = (e) => {
-    if (e.key === 'j') {
-      rightUp.current = true;
-    }
-    if (e.key === 'f') {
-      leftUp.current = true;
-    }
+    if (e.key === 'j') rightUp.current = true;
+    if (e.key === 'f') leftUp.current = true;
   };
 
   const handleKeyUp = (e) => {
-    if (e.key === 'j') {
-      rightUp.current = false;
-    }
-    if (e.key === 'f') {
-      leftUp.current = false;
-    }
+    if (e.key === 'j') rightUp.current = false;
+    if (e.key === 'f') leftUp.current = false;
   };
 
   const createRings = () => {
@@ -58,13 +104,12 @@ function App() {
       ];
       const colors = [0xee6688, 0x00dd44, 0x1122ff];
       const color = colors[Math.floor(Math.random() * colors.length)];
-
       nextRings.push({ id, position, rotation, color });
     }
     setRings(nextRings);
   };
 
-  const handleOrientation = ({ alpha, beta, gamma }) => {
+  const handleOrientationForGravity = ({ alpha, beta, gamma }) => {
     const deviceEuler = new Euler(
       degToRad(beta),
       degToRad(alpha),
@@ -72,45 +117,31 @@ function App() {
       'YXZ',
     );
 
-    // Apply a correction so the phone being upright makes gravity point down the screen
-    const correctionEuler = new Euler(degToRad(80), 0, 0, 'XYZ');
+    const correctionEuler = new Euler(degToRad(90), 0, 0, 'XYZ');
 
-    const gravityVector = new Vector3(0, 90, 0);
-    gravityVector.applyEuler(deviceEuler);
-    gravityVector.applyEuler(correctionEuler); // apply the device orientation fix
+    const gravityVector = new Vector3(0, 90, 0)
+      .applyEuler(deviceEuler)
+      .applyEuler(correctionEuler);
 
     const { x, y, z } = gravityVector;
     setGravity([x, y, z]);
-
-    cameraRotation.current = [
-      degToRad(beta) * 0.01, // slight tilt up/down
-      degToRad(gamma) * 0.01, // slight pan left/right
-      0, // no roll for now
-    ];
-  };
-
-  const handleMotion = (e) => {
-    console.log('motion', e);
   };
 
   const enableGyro = async () => {
     try {
       if (
-        typeof DeviceOrientationEvent !== 'undefined'
-        && typeof DeviceOrientationEvent.requestPermission === 'function'
+        typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function'
       ) {
         const response = await DeviceOrientationEvent.requestPermission();
         if (response === 'granted') {
-          window.addEventListener('deviceorientation', handleOrientation);
-          window.addEventListener('devicemotion', handleMotion);
+          window.addEventListener('deviceorientation', handleOrientationForGravity);
           setGyroEnabled(true);
         } else {
           alert('Gyroscope permission denied.');
         }
       } else {
-        // Non-iOS
-        window.addEventListener('deviceorientation', handleOrientation);
-        window.addEventListener('devicemotion', handleMotion);
+        window.addEventListener('deviceorientation', handleOrientationForGravity);
         setGyroEnabled(true);
       }
     } catch (err) {
@@ -126,16 +157,18 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('deviceorientation', handleOrientation);
-      window.removeEventListener('devicemotion', handleMotion);
+      window.removeEventListener('deviceorientation', handleOrientationForGravity);
     };
   }, []);
 
   return (
     <div className="app">
       <Canvas dpr={0.5}>
-        <PerspectiveCamera makeDefault far={200} near={0.1} fov={45} position={[0, 0, 50]} />
-        <Environment files={tvStudio} blur={0.2} />
+        <group ref={cameraGroup}>
+          <PerspectiveCamera makeDefault far={200} near={0.1} fov={45} position={[0, 0, 10]} />
+        </group>
+        <GyroCameraController cameraGroup={cameraGroup} damping={0.01} />
+        <Environment files={tvStudio} blur={0.2} background />
         <directionalLight
           intensity={1}
           castShadow
@@ -147,29 +180,26 @@ function App() {
         <GravityArrow gravity={gravity} />
         <Physics
           gravity={gravity}
-          // broadphase="Naive"
           broadphase="SAP"
           quatNormalizeFast
           iterations={6}
           allowSleep={false}
           tolerance={0.01}
-        // defaultContactMaterial={{ contactEquationRelaxation: 4, contactEquationStiffness: 1e7 }}
         >
-          <Debug color="black" scale={0.25}>
-            {rings.map((ring) => (
-              <Ring
-                key={ring.id}
-                position={ring.position}
-                rotation={ring.rotation}
-                color={ring.color}
-              />
-            ))}
-            <Tank />
-            <Actuator position={leftActuatorPosition.current} up={leftUp} />
-            <Actuator position={rightActuatorPosition.current} up={rightUp} />
-          </Debug>
+          {/* <Debug color="black" scale={1}> */}
+          {rings.map((ring) => (
+            <Ring
+              key={ring.id}
+              position={ring.position}
+              rotation={ring.rotation}
+              color={ring.color}
+            />
+          ))}
+          <Tank />
+          <Actuator position={leftActuatorPosition.current} up={leftUp} />
+          <Actuator position={rightActuatorPosition.current} up={rightUp} />
+          {/* </Debug> */}
         </Physics>
-        {/* <OrbitControls /> */}
       </Canvas>
 
       <div className="mobile-controls">
@@ -190,6 +220,7 @@ function App() {
           Right
         </button>
       </div>
+
       {!gyroEnabled && (
         <button
           type="button"

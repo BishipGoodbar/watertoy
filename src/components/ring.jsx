@@ -14,7 +14,7 @@ function Ring(props) {
     shapes.push({
       type: 'Sphere',
       // type: 'Box',
-      args: [0.1, 0.1, 0.1],
+      args: [0.5, 0.5],
       position: [radius * Math.cos(angle), radius * Math.sin(angle), 0],
       rotation: [0, 0, (i * 360) * (Math.PI / 180)],
     });
@@ -44,15 +44,6 @@ function Ring(props) {
           receiveShadow
         />
         <meshStandardMaterial wireframe />
-        {/* <MeshTransmissionMaterial
-          transmission={0.9}
-          roughness={0.1}
-          thickness={1.5}
-          ior={1.5}
-          reflectivity={0.1}
-          color={color}
-          backsideThickness={0.1}
-        /> */}
       </mesh>
     </group>
   );
