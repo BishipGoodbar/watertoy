@@ -1,15 +1,14 @@
 import React, { useRef, useEffect } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { useBox } from '@react-three/cannon';
-import tankModel from '../assets/models/tank3.glb';
+import tankModel from '../assets/models/tank.glb';
 
-function Tank({ setTargets, leftUp, rightUp }) {
+function Tank({ setTargets, leftUp, rightUp, setTankLoaded }) {
   const gltf = useGLTF(tankModel);
   const { nodes, scene } = gltf;
   const bodies = [];
   const buttonLeft = useRef();
   const buttonRight = useRef();
-
 
   nodes.Physics.children.forEach((obj) => {
     obj.visible = false;
@@ -32,6 +31,9 @@ function Tank({ setTargets, leftUp, rightUp }) {
   });
 
   useEffect(() => {
+    if (!nodes?.Physics) return;
+    setTankLoaded(true);
+
     buttonLeft.current = scene.getObjectByName('Button_Left');
     buttonRight.current = scene.getObjectByName('Button_Right');
     if (nodes?.Targets?.children?.length) {

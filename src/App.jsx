@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei';
-import { Debug, Physics } from '@react-three/cannon';
+import { Physics, Debug } from '@react-three/cannon';
 import { Euler, Quaternion, Vector3, MathUtils } from 'three';
 import GyroCameraController from './components/gyroCamera';
 
 import tvStudio from './assets/images/tv_studio_small.hdr';
+import beach from './assets/images/pool_2k.hdr';
 import Tank from './components/tank';
 import Ring from './components/ring';
 import Actuator from './components/actuator';
@@ -14,14 +15,15 @@ import GravityArrow from './components/gravityArrow';
 import './index.scss';
 
 const gyroAvailable = typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function';
-const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+// const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
 function App() {
+  const [tankLoaded, setTankLoaded] = useState(false);
   const [rings, setRings] = useState([]);
   const [targets, setTargets] = useState([]);
   const [gyroEnabled, setGyroEnabled] = useState(false);
   const [disableGyro, setDisableGyro] = useState(false);
-  const [gravity, setGravity] = useState([0, -50, 0]);
+  const [gravity, setGravity] = useState([0, -10, 0]);
   const leftActuatorPosition = useRef([-5, -16, 0]);
   const rightActuatorPosition = useRef([5, -16, 0]);
   const leftUp = useRef(false);
@@ -79,7 +81,9 @@ function App() {
     orientationQuat.multiply(q1);
     orientationQuat.multiply(q0.setFromAxisAngle(zee, -orient));
 
-    const gravityVec = new Vector3(0, -45, 0).applyQuaternion(orientationQuat);
+    // Tilt gravity 20 degrees backward around the X-axis
+    const tiltX = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), MathUtils.degToRad(20));
+    const gravityVec = new Vector3(0, -10, 0).applyQuaternion(tiltX).applyQuaternion(orientationQuat);
     setGravity([gravityVec.x, gravityVec.y, gravityVec.z]);
   };
 
@@ -119,14 +123,19 @@ function App() {
 
   return (
     <div className="app">
+      {!tankLoaded && (
+        <div className="loading">
+          <p>Loading...</p>
+        </div>
+      )}
       <Canvas dpr={gyroAvailable ? 0.3 : 1} shadows>
         <group ref={cameraGroup}>
-          <PerspectiveCamera makeDefault far={200} near={0.1} fov={35} position={[0, 0, 15]} />
+          <PerspectiveCamera makeDefault far={200} near={0.1} fov={35} position={[0, 0, gyroEnabled ? 20 : 60]} />
         </group>
-        <GyroCameraController cameraGroup={cameraGroup} useOrientation={gyroEnabled} />
-        <Environment files={tvStudio} intensity={10} blur={0} background />
+        {gyroEnabled && (<GyroCameraController cameraGroup={cameraGroup} useOrientation={gyroEnabled} />)}
+        <Environment files={tvStudio} intensity={10} blur={0.2} background />
         <directionalLight
-          intensity={10}
+          intensity={2}
           castShadow
           shadow-bias={0.001}
           shadow-mapSize-width={512}
@@ -137,7 +146,7 @@ function App() {
           shadow-camera-right={50}
           shadow-camera-top={50}
           shadow-camera-bottom={-50}
-          position={[5, 5, 3]}
+          position={[2, 2, 2]}
         />
         <GravityArrow gravity={gravity} />
         <Physics
@@ -160,11 +169,12 @@ function App() {
               targets={targets}
             />
           ))}
-          <Tank setTargets={setTargets} leftUp={leftUp} rightUp={rightUp} />
+          <Tank setTargets={setTargets} leftUp={leftUp} rightUp={rightUp} setTankLoaded={setTankLoaded} />
           <Actuator position={leftActuatorPosition.current} up={leftUp} />
           <Actuator position={rightActuatorPosition.current} up={rightUp} />
         </Physics>
         <OrbitControls
+          enabled={!gyroEnabled}
           enableZoom={false}
         />
       </Canvas>

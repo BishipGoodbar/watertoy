@@ -45,14 +45,13 @@ function Ring({ position, rotation, color, targets }) {
   useEffect(() => {
     const unsubVelocity = api.velocity.subscribe((v) => {
       const speed = Math.sqrt(v[0] ** 2 + v[1] ** 2 + v[2] ** 2);
+
       if (speed < 1) {
         if (!sleepTimer.current) {
           sleepTimer.current = setTimeout(() => {
             const unsubscribe = api.position.subscribe((pos) => {
               const isNearTarget = targets.some((target) => distanceBetween(target, pos) < 1);
-              if (isNearTarget) {
-                setIsAsleep(true);
-              }
+              setIsAsleep(isNearTarget); // <-- cleanly update asleep state
               unsubscribe();
             });
           }, 100);
@@ -62,7 +61,8 @@ function Ring({ position, rotation, color, targets }) {
           clearTimeout(sleepTimer.current);
           sleepTimer.current = null;
         }
-        if (isAsleep) setIsAsleep(false);
+        // Even if it wasn't asleep yet, cancel any transition
+        setIsAsleep(false);
       }
     });
 
@@ -79,7 +79,7 @@ function Ring({ position, rotation, color, targets }) {
         <meshStandardMaterial
           color={isAsleep ? 'gold' : originalColor.current}
           transparent
-          opacity={0.5}
+          opacity={isAsleep ? 1 : 0.5}
           metalness={0.5}
           roughness={0.2}
         />
