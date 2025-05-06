@@ -11,7 +11,7 @@ function Actuator(props) {
 
   const [ref, api] = useBox(
     () => ({
-      args: [size, size, size, 4, 4, 4],
+      args: [size, size, size],
       mass: 0,
       ...props,
     }),
@@ -28,9 +28,10 @@ function Actuator(props) {
       ref={ref}
       visible
       position={props.position}
-      geometry={new BoxGeometry(size, size, size - 2, 4, 1, 4)}
+      geometry={new BoxGeometry(size, size, size, 1, 1, 1)}
     >
-      <MeshTransmissionMaterial
+      <meshStandardMaterial wireframe />
+      {/* <MeshTransmissionMaterial
         transmission={0.9}
         roughness={0.2}
         thickness={1}
@@ -40,9 +41,9 @@ function Actuator(props) {
         chromaticAberration={1}
         backsideThickness={1}
         backside
-        // flatShading
+        wireframe
         envMapIntensity={1}
-      />
+      /> */}
     </mesh>
   );
 }

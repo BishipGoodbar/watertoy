@@ -1,14 +1,18 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useGLTF, MeshTransmissionMaterial } from '@react-three/drei';
 import { useTrimesh, useBox } from '@react-three/cannon';
+import { useFrame } from '@react-three/fiber';
 import tankModel from '../assets/models/tank.gltf';
 
 function Tank(props) {
   const gltf = useGLTF(tankModel);
   const { nodes, scene } = gltf;
   const bodies = [];
+  const button1 = useRef();
+  const button2 = useRef();
 
-  console.log(nodes);
+  const buttons = [button1, button2];
+  const buttonStates = useRef([0, 0]);
 
   nodes.Physics.children.forEach((obj) => {
     obj.visible = false;
@@ -25,7 +29,12 @@ function Tank(props) {
     bodies.push(body);
   });
 
-  // console.log({ bodies });
+  useFrame(() => {
+    // console.log(buttonStates.current, buttons);
+    // buttons.forEach((button, index) => {
+    //   button.current.position.z += (buttonStates.current[index] - button.current.position.y) / 20;
+    // });
+  });
 
   return (
     <group>
@@ -41,7 +50,26 @@ function Tank(props) {
           </mesh>
         ))
       }
-      <primitive object={scene} />
+      <primitive
+        key="scene"
+        object={nodes.Scene}
+      />
+      {
+        nodes.Interactive.children.map((button, index) => (
+          <primitive
+            // scale={[1, 1, buttonLeftDown.current ? 2 : 1]}
+            key={button.name}
+            ref={buttons[index]}
+            object={button}
+            onPointerDown={() => {
+              buttonStates.current[index] = 1;
+            }}
+            onPointerUp={() => {
+              buttonStates.current[index] = 0;
+            }}
+          />
+        ))
+      }
     </group>
   );
 }

@@ -1,19 +1,14 @@
 import React, { useRef } from 'react';
 import { useCompoundBody, useLockConstraint } from '@react-three/cannon';
 import { MeshTransmissionMaterial } from '@react-three/drei';
+import { MeshStandardMaterial } from 'three';
 
 function Ring(props) {
-  const { position, rotation } = props;
-  const colors = [
-    0xee6688,
-    0x00dd44,
-    0x1122ff,
-  ];
-  const randomColor = () => colors[Math.floor(Math.random() * colors.length)];
+  const { position, rotation, color } = props;
 
   const shapes = [];
-  const radius = 1;
-  const segments = 4;
+  const radius = 1.5;
+  const segments = 10;
   for (let i = 0; i < 1; i += (1 / segments)) {
     const angle = i * 2 * Math.PI;
     shapes.push({
@@ -26,10 +21,14 @@ function Ring(props) {
   }
   const [ref, api] = useCompoundBody(
     () => ({
-      mass: 1,
+      mass: 10,
       position,
       rotation,
       shapes,
+      material: {
+        friction: 0.01,
+        restitution: 0.2,
+      },
     }),
     useRef(),
   );
@@ -37,17 +36,21 @@ function Ring(props) {
   return (
     <group>
       <mesh ref={ref}>
-        <torusGeometry args={[1, 0.25]} />
-        <MeshTransmissionMaterial
+        <torusGeometry
+          args={[radius, 0.25]}
+          castShadow
+          receiveShadow
+        />
+        <meshStandardMaterial wireframe />
+        {/* <MeshTransmissionMaterial
           transmission={0.9}
           roughness={0.1}
-          thickness={0.5}
+          thickness={1.5}
           ior={1.5}
           reflectivity={0.1}
-          color={randomColor()}
+          color={color}
           backsideThickness={0.1}
-        // wireframe
-        />
+        /> */}
       </mesh>
     </group>
   );
