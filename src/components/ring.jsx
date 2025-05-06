@@ -1,11 +1,8 @@
 import React, { useRef } from 'react';
-import { useCompoundBody, useLockConstraint } from '@react-three/cannon';
-import { MeshTransmissionMaterial } from '@react-three/drei';
-import { MeshStandardMaterial } from 'three';
+import { useCompoundBody } from '@react-three/cannon';
 
 function Ring(props) {
   const { position, rotation, color } = props;
-
   const shapes = [];
   const radius = 1.5;
   const segments = 10;
@@ -14,15 +11,16 @@ function Ring(props) {
     shapes.push({
       type: 'Sphere',
       // type: 'Box',
-      args: [0.5, 0.5],
+      args: [0.5, 0.5, 1],
       position: [radius * Math.cos(angle), radius * Math.sin(angle), 0],
       rotation: [0, 0, (i * 360) * (Math.PI / 180)],
     });
   }
+
   const [ref, api] = useCompoundBody(
     () => ({
-      linearDamping: 0.001,
-      angularDamping: 0.001,
+      // linearDamping: 0.001,
+      // angularDamping: 0.001,
       mass: 1,
       position,
       rotation,
@@ -39,11 +37,17 @@ function Ring(props) {
     <group>
       <mesh ref={ref}>
         <torusGeometry
-          args={[radius, 0.25]}
+          args={[radius, 0.33]}
           castShadow
           receiveShadow
         />
-        <meshStandardMaterial wireframe />
+        <meshStandardMaterial
+          color={color}
+          transparent
+          opacity={0.5}
+          metalness={0.5}
+          roughness={0.2}
+        />
       </mesh>
     </group>
   );

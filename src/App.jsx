@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Environment, PerspectiveCamera } from '@react-three/drei';
+import { Canvas } from '@react-three/fiber';
+import { Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { Debug, Physics } from '@react-three/cannon';
 import {
   Euler,
   Quaternion,
   Vector3,
-  MathUtils
+  MathUtils,
 } from 'three';
+import GyroCameraController from './components/gyroCamera';
 
 import tvStudio from './assets/images/tv_studio_small.hdr';
 import Tank from './components/tank';
@@ -18,76 +19,6 @@ import GravityArrow from './components/gravityArrow';
 import './index.scss';
 
 const isOrientationAvailable = typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function';
-
-const degToRad = (degrees) => degrees * Math.PI / 180;
-
-function GyroCameraController({ cameraGroup, useOrientation }) {
-  const deviceOrientation = useRef({ alpha: 0, beta: 0, gamma: 0 });
-  const screenOrientation = useRef(window.orientation || 0);
-
-  const _zee = new Vector3(0, 0, 1);
-  const _euler = new Euler();
-  const _q0 = new Quaternion();
-  const _q1 = new Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
-  const _orientationQuat = new Quaternion();
-  const _targetPosition = new Vector3();
-  const mouse = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    if (useOrientation) {
-      const handleOrientation = (event) => {
-        deviceOrientation.current = event;
-      };
-      const handleScreenOrientation = () => {
-        screenOrientation.current = window.orientation || 0;
-      };
-
-      window.addEventListener('deviceorientation', handleOrientation, true);
-      window.addEventListener('orientationchange', handleScreenOrientation);
-
-      return () => {
-        window.removeEventListener('deviceorientation', handleOrientation, true);
-        window.removeEventListener('orientationchange', handleScreenOrientation);
-      };
-    } else {
-      const handleMouseMove = (event) => {
-        mouse.current.x = (event.clientX / window.innerWidth - 0.5) * 2;
-        mouse.current.y = (event.clientY / window.innerHeight - 0.5) * -2;
-      };
-
-      window.addEventListener('mousemove', handleMouseMove);
-      return () => window.removeEventListener('mousemove', handleMouseMove);
-    }
-  }, [useOrientation]);
-
-  useFrame(() => {
-    if (!cameraGroup.current) return;
-
-    if (useOrientation) {
-      const { alpha, beta, gamma } = deviceOrientation.current;
-      const orient = MathUtils.degToRad(screenOrientation.current || 0);
-
-      const a = alpha ? MathUtils.degToRad(alpha) : 0;
-      const b = beta ? MathUtils.degToRad(beta) : 0;
-      const g = gamma ? MathUtils.degToRad(gamma) : 0;
-
-      _euler.set(b, a, -g, 'YXZ');
-      _orientationQuat.setFromEuler(_euler);
-      _orientationQuat.multiply(_q1);
-      _orientationQuat.multiply(_q0.setFromAxisAngle(_zee, -orient));
-
-      const forward = new Vector3(0, 0, 1).applyQuaternion(_orientationQuat);
-      _targetPosition.copy(forward).multiplyScalar(50);
-    } else {
-      _targetPosition.set(mouse.current.x * 10, mouse.current.y * 10, 50);
-    }
-
-    cameraGroup.current.position.lerp(_targetPosition, 0.1);
-    cameraGroup.current.children[0]?.lookAt(0, 0, 0);
-  });
-
-  return null;
-}
 
 function App() {
   const [rings, setRings] = useState([]);
@@ -155,12 +86,11 @@ function App() {
     setGravity([gravityVec.x, gravityVec.y, gravityVec.z]);
   };
 
-
   const enableGyro = async () => {
     try {
       if (
-        typeof DeviceOrientationEvent !== 'undefined' &&
-        typeof DeviceOrientationEvent.requestPermission === 'function'
+        typeof DeviceOrientationEvent !== 'undefined'
+        && typeof DeviceOrientationEvent.requestPermission === 'function'
       ) {
         const response = await DeviceOrientationEvent.requestPermission();
         if (response === 'granted') {
@@ -192,19 +122,19 @@ function App() {
 
   return (
     <div className="app">
-      <Canvas dpr={0.5}>
+      <Canvas dpr={isOrientationAvailable ? 0.3 : 1} shadows>
         <group ref={cameraGroup}>
-          <PerspectiveCamera makeDefault far={200} near={0.1} fov={45} position={[0, 0, 10]} />
+          <PerspectiveCamera makeDefault far={200} near={0.1} fov={35} position={[0, 0, 10]} />
         </group>
         <GyroCameraController cameraGroup={cameraGroup} useOrientation={gyroEnabled} />
         <Environment files={tvStudio} blur={0.1} background />
         <directionalLight
           intensity={1}
           castShadow
-          shadow-mapSize={2048}
+          shadow-mapSize={512}
           shadow-bias={0.0001}
-          position={[0, 0, 0]}
-          target-position={[0, -1, 0]}
+          position={[0, 4, -2]}
+        // target-position={[0, -1, 0]}
         />
         <GravityArrow gravity={gravity} />
         <Physics
@@ -227,23 +157,22 @@ function App() {
           <Actuator position={leftActuatorPosition.current} up={leftUp} />
           <Actuator position={rightActuatorPosition.current} up={rightUp} />
         </Physics>
+        <OrbitControls />
       </Canvas>
 
       <div className="mobile-controls">
-        <button
-          type="button"
+        <div
+          // type="button"
           className="control-button left"
           onPointerDown={() => { leftUp.current = true; }}
           onPointerUp={() => { leftUp.current = false; }}
-        >
-        </button>
-        <button
-          type="button"
+        />
+        <div
+          // type="button"
           className="control-button right"
           onPointerDown={() => { rightUp.current = true; }}
           onPointerUp={() => { rightUp.current = false; }}
-        >
-        </button>
+        />
       </div>
 
       {isOrientationAvailable && !gyroEnabled && (

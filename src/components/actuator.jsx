@@ -19,7 +19,7 @@ function Actuator(props) {
   );
 
   useFrame((state, delta) => {
-    sp.current[1] += ((up.current ? -10 : -16) - sp.current[1]) / (20 * (delta * 10));
+    sp.current[1] += ((up.current ? -10 : -16) - sp.current[1]) / (50 * (delta * 10));
     api.position.set(sp.current[0], sp.current[1], sp.current[2]);
   });
 
