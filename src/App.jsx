@@ -150,7 +150,7 @@ function App() {
           shadow-camera-bottom={-50}
           position={[2, 4, -2]}
         />
-        <GravityArrow gravity={gravity} />
+        {/* <GravityArrow gravity={gravity} /> */}
         <Physics
           gravity={gravity}
           broadphase="SAP"
