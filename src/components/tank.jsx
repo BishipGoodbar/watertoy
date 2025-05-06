@@ -4,9 +4,9 @@ import { useTrimesh, useBox } from '@react-three/cannon';
 import { useFrame } from '@react-three/fiber';
 import tankModel from '../assets/models/tank.gltf';
 
-function Tank(props) {
+function Tank() {
   const gltf = useGLTF(tankModel);
-  const { nodes, scene } = gltf;
+  const { nodes } = gltf;
   const bodies = [];
   const button1 = useRef();
   const button2 = useRef();
@@ -16,24 +16,22 @@ function Tank(props) {
 
   nodes.Physics.children.forEach((obj) => {
     obj.visible = false;
-    const [body, api] = useBox(
+    const [body] = useBox(
       () => ({
         args: [obj.scale.x * 2, obj.scale.y * 2, obj.scale.z * 2],
         mass: 0,
         position: [obj.position.x, obj.position.y, obj.position.z],
         rotation: [obj.rotation._x, obj.rotation._y, obj.rotation._z],
+        material: {
+          friction: 0.01, // lower friction for smoother sliding
+          restitution: 0.2, // optional: some bounciness
+        },
       }),
       useRef(),
     );
 
+    body.name = obj.name;
     bodies.push(body);
-  });
-
-  useFrame(() => {
-    // console.log(buttonStates.current, buttons);
-    // buttons.forEach((button, index) => {
-    //   button.current.position.z += (buttonStates.current[index] - button.current.position.y) / 20;
-    // });
   });
 
   return (

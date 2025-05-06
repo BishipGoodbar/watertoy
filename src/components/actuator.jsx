@@ -19,7 +19,7 @@ function Actuator(props) {
   );
 
   useFrame((state, delta) => {
-    sp.current[1] += ((up.current ? -10 : -16) - sp.current[1]) / (20 * (delta * 100));
+    sp.current[1] += ((up.current ? -10 : -16) - sp.current[1]) / (20 * (delta * 10));
     api.position.set(sp.current[0], sp.current[1], sp.current[2]);
   });
 
@@ -31,19 +31,6 @@ function Actuator(props) {
       geometry={new BoxGeometry(size, size, size, 1, 1, 1)}
     >
       <meshStandardMaterial wireframe />
-      {/* <MeshTransmissionMaterial
-        transmission={0.9}
-        roughness={0.2}
-        thickness={1}
-        ior={1.8}
-        reflectivity={0.01}
-        color={0xeeeeee}
-        chromaticAberration={1}
-        backsideThickness={1}
-        backside
-        wireframe
-        envMapIntensity={1}
-      /> */}
     </mesh>
   );
 }

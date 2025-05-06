@@ -23,6 +23,7 @@ function App() {
   const ringAmount = 10;
   const tankSize = { x: 14, y: 12, z: 2 };
   const tankOffset = { x: 0, y: 6, z: 0 };
+  const cameraRotation = useRef([0, 0, 0]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'j') {
@@ -72,7 +73,7 @@ function App() {
     );
 
     // Apply a correction so the phone being upright makes gravity point down the screen
-    const correctionEuler = new Euler(degToRad(90), 0, 0, 'XYZ');
+    const correctionEuler = new Euler(degToRad(80), 0, 0, 'XYZ');
 
     const gravityVector = new Vector3(0, 90, 0);
     gravityVector.applyEuler(deviceEuler);
@@ -80,6 +81,12 @@ function App() {
 
     const { x, y, z } = gravityVector;
     setGravity([x, y, z]);
+
+    cameraRotation.current = [
+      degToRad(beta) * 0.01, // slight tilt up/down
+      degToRad(gamma) * 0.01, // slight pan left/right
+      0, // no roll for now
+    ];
   };
 
   const handleMotion = (e) => {
@@ -133,21 +140,22 @@ function App() {
           intensity={1}
           castShadow
           shadow-mapSize={2048}
-          shadow-bias={0.000001}
+          shadow-bias={0.0001}
           position={[0, 0, 0]}
           target-position={[0, -1, 0]}
         />
         <GravityArrow gravity={gravity} />
         <Physics
           gravity={gravity}
+          // broadphase="Naive"
           broadphase="SAP"
           quatNormalizeFast
-          iterations={2}
+          iterations={6}
           allowSleep={false}
-          tolerance={0.001}
-          defaultContactMaterial={{ contactEquationRelaxation: 4, contactEquationStiffness: 1e7 }}
+          tolerance={0.01}
+        // defaultContactMaterial={{ contactEquationRelaxation: 4, contactEquationStiffness: 1e7 }}
         >
-          <Debug color="black" scale={1}>
+          <Debug color="black" scale={0.25}>
             {rings.map((ring) => (
               <Ring
                 key={ring.id}
@@ -166,22 +174,25 @@ function App() {
 
       <div className="mobile-controls">
         <button
+          type="button"
           className="control-button left"
           onPointerDown={() => { leftUp.current = true; }}
           onPointerUp={() => { leftUp.current = false; }}
         >
-          Left (F)
+          Left
         </button>
         <button
+          type="button"
           className="control-button right"
           onPointerDown={() => { rightUp.current = true; }}
           onPointerUp={() => { rightUp.current = false; }}
         >
-          Right (J)
+          Right
         </button>
       </div>
       {!gyroEnabled && (
         <button
+          type="button"
           className="enable-gyro"
           onClick={enableGyro}
         >
