@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { useBox } from '@react-three/cannon';
-import tankModel from '../assets/models/tank2.gltf';
+import tankModel from '../assets/models/tank2.glb';
 
 function Tank({ setTargets }) {
   const gltf = useGLTF(tankModel);

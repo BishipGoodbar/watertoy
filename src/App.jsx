@@ -157,7 +157,9 @@ function App() {
           <Actuator position={leftActuatorPosition.current} up={leftUp} />
           <Actuator position={rightActuatorPosition.current} up={rightUp} />
         </Physics>
-        <OrbitControls />
+        <OrbitControls
+          enableZoom={false}
+        />
       </Canvas>
 
       <div className="mobile-controls">
