@@ -124,13 +124,20 @@ function App() {
           <PerspectiveCamera makeDefault far={200} near={0.1} fov={35} position={[0, 0, 15]} />
         </group>
         <GyroCameraController cameraGroup={cameraGroup} useOrientation={gyroEnabled} />
-        <Environment files={tvStudio} blur={0.1} background />
+        <Environment files={tvStudio} intensity={10} blur={0} background />
         <directionalLight
-          intensity={1}
+          intensity={10}
           castShadow
-          shadow-mapSize={512}
-          shadow-bias={0.0001}
-          position={[0, 4, 2]}
+          shadow-bias={0.001}
+          shadow-mapSize-width={512}
+          shadow-mapSize-height={512}
+          shadow-camera-near={1}
+          shadow-camera-far={50}
+          shadow-camera-left={-50}
+          shadow-camera-right={50}
+          shadow-camera-top={50}
+          shadow-camera-bottom={-50}
+          position={[5, 5, 3]}
         />
         <GravityArrow gravity={gravity} />
         <Physics
@@ -153,7 +160,7 @@ function App() {
               targets={targets}
             />
           ))}
-          <Tank setTargets={setTargets} />
+          <Tank setTargets={setTargets} leftUp={leftUp} rightUp={rightUp} />
           <Actuator position={leftActuatorPosition.current} up={leftUp} />
           <Actuator position={rightActuatorPosition.current} up={rightUp} />
         </Physics>

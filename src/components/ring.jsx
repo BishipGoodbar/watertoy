@@ -2,7 +2,11 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useCompoundBody } from '@react-three/cannon';
 import { Color, Vector3 } from 'three';
 
-const distanceBetween = (a, b) => Math.sqrt((a[0] - b[0]) ** 2, (a[1] - b[1]) ** 2, (a[2] - b[2]) ** 2);
+const distanceBetween = (a, b) => Math.sqrt(
+  (a[0] - b[0]) ** 2
+  + (a[1] - b[1]) ** 2
+  + (a[2] - b[2]) ** 2,
+);
 
 function Ring({ position, rotation, color, targets }) {
   const radius = 1.5;
@@ -45,14 +49,13 @@ function Ring({ position, rotation, color, targets }) {
         if (!sleepTimer.current) {
           sleepTimer.current = setTimeout(() => {
             const unsubscribe = api.position.subscribe((pos) => {
-              // targets.forEach((target, index) => {
-              // console.log(`distance to target ${index}:${distanceBetween(target, pos)}`);
-              // });
-              // console.log('💤 Ring asleep at position:', pos, targets);
+              const isNearTarget = targets.some((target) => distanceBetween(target, pos) < 1);
+              if (isNearTarget) {
+                setIsAsleep(true);
+              }
               unsubscribe();
             });
-            setIsAsleep(true);
-          }, 500);
+          }, 100);
         }
       } else {
         if (sleepTimer.current) {
@@ -74,7 +77,7 @@ function Ring({ position, rotation, color, targets }) {
       <mesh ref={ref} castShadow receiveShadow>
         <torusGeometry args={[radius, 0.33]} />
         <meshStandardMaterial
-          color={isAsleep ? 'gray' : originalColor.current}
+          color={isAsleep ? 'gold' : originalColor.current}
           transparent
           opacity={0.5}
           metalness={0.5}

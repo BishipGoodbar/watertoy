@@ -1,14 +1,16 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { useBox } from '@react-three/cannon';
 import tankModel from '../assets/models/tank3.glb';
 
-function Tank({ setTargets }) {
+function Tank({ setTargets, leftUp, rightUp }) {
   const gltf = useGLTF(tankModel);
-  const { nodes } = gltf;
+  const { nodes, scene } = gltf;
   const bodies = [];
+  const buttonLeft = useRef();
+  const buttonRight = useRef();
 
-  // useEffect(() => {
+
   nodes.Physics.children.forEach((obj) => {
     obj.visible = false;
     const [body] = useBox(
@@ -29,14 +31,30 @@ function Tank({ setTargets }) {
     bodies.push(body);
   });
 
-  nodes.Scene.children.forEach((obj) => {
-    if (obj.isObject3D) {
-      obj.castShadow = true;
-      obj.receiveShadow = true;
+  useEffect(() => {
+    buttonLeft.current = scene.getObjectByName('Button_Left');
+    buttonRight.current = scene.getObjectByName('Button_Right');
+    if (nodes?.Targets?.children?.length) {
+      const targets = nodes.Targets.children.map((t) => [
+        t.position.x,
+        t.position.y,
+        t.position.z,
+      ]);
+      setTargets(targets);
     }
-    // console.log(obj.isObject3D);
-  });
-  // }, [nodes]);
+
+    if (nodes?.BaseScene) {
+      nodes.BaseScene.children.forEach((obj) => {
+        obj.castShadow = true;
+        obj.receiveShadow = true;
+      })
+    }
+  }, [nodes, setTargets]);
+
+  useEffect(() => {
+    buttonLeft.current.position.z = leftUp.current ? 2 : 3;
+    buttonRight.current.position.z = rightUp.current ? 2 : 3;
+  }, [leftUp.current, rightUp.current])
 
   setTargets(nodes.Targets.children.map((t) => [t.position.x, t.position.y, t.position.z]));
 
