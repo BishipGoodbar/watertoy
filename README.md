@@ -1,6 +1,7 @@
 # Water Toy Game
 
-Uses Cannon Physics inside of a React Three Fiber scene to emulate the classic Water Toy game. 
+Uses Cannon Physics inside of a React Three Fiber scene to emulate the classic Water Toy game.   
+[Live Demo](http://daveseidman.github.io/watertoy/)
 
 The app is made up of a Scene created with Blender along with a few components:
 
